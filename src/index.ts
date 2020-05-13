@@ -11,21 +11,22 @@ const app = express();
 export interface cliviaOptions {
     port: number,
     swaggerSchema: string,
-    guardMidware?: RequestHandler
+    middlewares: [{
+        path: string,
+        fn: RequestHandler
+    }]
 }
 
 function clivia(options: cliviaOptions) {
-    let { swaggerSchema, port, guardMidware } = options;
+    let { swaggerSchema, port, middlewares } = options;
     createSchema({
         swaggerSchema,
         callBackend
     })
         .then(schema => {
-
-            guardMidware && app.use(
-                '/graphql',
-                guardMidware
-            );
+            middlewares.forEach(({ path, fn }) => {
+                app.use(path, fn);
+            });
 
             app.use(
                 '/graphql',
@@ -38,7 +39,7 @@ function clivia(options: cliviaOptions) {
             );
 
             app.listen(port, 'localhost', () => {
-                console.info(`http://localhost:${options.port}/graphql`);
+                console.info(`http://localhost:${port}/graphql`);
             });
         })
         .catch(e => {
